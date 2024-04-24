@@ -7,8 +7,8 @@ import csv
 import ast
 import torchvision
 from typing import Union
-from cmalight import CMA_L
 from cmalight_BD import CMA_L_BD
+from cmalight import CMA_L
 
 # Used to compute the loss function over the entire data set
 def closure(data_loader: torch.utils.data.DataLoader,
