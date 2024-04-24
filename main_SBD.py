@@ -9,7 +9,6 @@ from torch.utils.data import Subset
 from warnings import filterwarnings
 from utils_BD import set_optimizer, closure, accuracy, count_parameters
 
-
 filterwarnings('ignore')
 
 transform = torchvision.transforms.Compose([torchvision.transforms.RandomHorizontalFlip(),
@@ -121,18 +120,18 @@ def train_model(sm_root: str,
             if val_accuracy <= ro * val_accuracy_threshold:
                 count += 1
                 print(f'no val acc improvement for {count} consecutive epochs')
-            else:  # val acc improved, we update its value
+            else:  # val acc improved, we update the val acc threshold
                 count = 0
                 val_accuracy_threshold = val_accuracy
 
             if count == patience:
                 count = 0
-                i = 0
-                for p in reversed(param_to_update_list):
-                    if i <= 2:
+                n_reactivated_layers = 0
+                for p in reversed(param_list):
+                    if not p.requires_grad:
                         p.requires_grad = True
-                        i += 1
-                    else:
+                        n_reactivated_layers += 1
+                    if n_reactivated_layers > 2:
                         break
 
         epoch_update_list.append(difference)
