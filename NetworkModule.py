@@ -12,13 +12,20 @@ class ResNet(pl.LightningModule):
     def __init__(self,model_name, n_classes,
                  metric, loss_fun, optimizer,
                  device='cuda',
-                 pretrained=True,**opt_params):
+                 pretrained=True,
+                 ablate=None,
+                 **opt_params):
         super().__init__()
         self.model = torch.hub.load('pytorch/vision:v0.6.0', model_name, pretrained=pretrained).to(device)
         self.model.fc = nn.Linear(self.model.fc.in_features, n_classes).to(device)
         self.metric = metric
         self.loss_fun = loss_fun
-        self.opt = set_optimizer(optimizer, self.model.parameters(), **opt_params)
+        self.opt = set_optimizer(optimizer, self.model, **opt_params)
+        if ablate is not None:
+            for k in range(len(ablate)):
+                for p in eval('self.model.layer'+str(ablate[k])+'.parameters()'):
+                    p.requires_grad = False
+
 
     def forward(self, x):
         return self.model(x)
@@ -35,6 +42,7 @@ class ResNet(pl.LightningModule):
 
     def on_train_epoch_end(self) -> None:
         dataloader = self.trainer.train_dataloader
+        #To be completed
 
 
     def validation_step(self, batch, batch_idx):

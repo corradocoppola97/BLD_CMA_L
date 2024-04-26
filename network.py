@@ -79,6 +79,8 @@ def get_pretrained_net(type_model, num_classes=10):
         num_ftrs = pretrainedmodel.classifier[5].in_features
         pretrainedmodel.classifier[5] = torch.nn.Linear(num_ftrs, num_classes)
         torch.nn.init.xavier_uniform(pretrainedmodel.classifier[5].weight)
+    else:
+        raise ValueError('Select another network available')
 
     return pretrainedmodel
 
