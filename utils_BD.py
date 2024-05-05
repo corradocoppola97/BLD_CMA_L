@@ -7,21 +7,23 @@ import csv
 import ast
 import torchvision
 from typing import Union
-from cmalight_BD import CMA_L_BD
 from cmalight import CMA_L
+from cmalight_BD import CMA_L_BD
 
 # Used to compute the loss function over the entire data set
 def closure(data_loader: torch.utils.data.DataLoader,
             model: torchvision.models,
             criterion: torch.nn,
             device: Union[torch.device, str]):
+    model.eval()
     loss = 0
+    P = (len(data_loader) - 1) * (len(data_loader[0][0])) + len(data_loader[-1][0])
     with torch.no_grad():
         for x, y in data_loader:
             x, y = x.to(device), y.to(device)
             y_pred = model(x)
             batch_loss = criterion(y_pred, y)
-            loss += batch_loss.item() * (len(x) / len(data_loader.dataset))
+            loss += batch_loss.item() * (len(x) / P)
     return loss
 
 
@@ -29,6 +31,7 @@ def closure(data_loader: torch.utils.data.DataLoader,
 def accuracy(data_loader: torch.utils.data.DataLoader,
              model: torchvision.models,
              device: Union[torch.device, str]):
+    model.eval()
     correct_predictions = 0
     total_samples = 0
 
