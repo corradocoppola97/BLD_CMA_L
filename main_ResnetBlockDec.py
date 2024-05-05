@@ -59,10 +59,12 @@ def train_model(sm_root: str,
     optimizer = set_optimizer(opt, model, *args, **kwargs)
 
     # Initial Setup
+    P = (len(dts_train) - 1) * (len(dts_train[0][0])) + len(dts_train[-1][0])
     min_acc = 0
     t1 = time.time()
     fw0 = closure(dts_train, model, criterion, device)
     t2 = time.time()
+    #print("fw0 =", fw0)
     time_compute_fw0 = t2 - t1  # To be added to the elapsed time in case we are using CMA Light (information used)
     initial_val_loss = closure(dts_test, model, criterion, device)
     train_accuracy = accuracy(dts_train, model, device)
@@ -94,7 +96,7 @@ def train_model(sm_root: str,
             optimizer.zero_grad()
             y_pred = model(x)
             loss = criterion(y_pred, y)
-            f_tilde += loss.item() * (len(x) / len(dts_train.dataset))
+            f_tilde += loss.item() * (len(x) / P)
             if verbose_train and (j+1)%25==0: print(f'Batch n. {j+1}  Running Loss:{loss.item()}')
             loss.backward()
             optimizer.step()
@@ -164,11 +166,15 @@ if __name__ == '__main__':
         #testset = Subset(torchvision.datasets.CIFAR10(root = dts_root, train = False, download = True, transform = transform), inds_test)
         testset = torchvision.datasets.CIFAR10(root=dts_root, train=False, download=True, transform=transform)
         testloader = torch.utils.data.DataLoader(testset, batch_size = bs, shuffle = False)#, pin_memory = True,num_workers = nw)
-        history = train_model(sm_root = '', opt = 'adam', ep = 30, ds = 'CIFAR10', net_name = 'resnet18',
-                              history_ID = 'provaAblation'+str(abl), dts_train = trainloader,
-                              dts_test = testloader, verbose_train = True, ablate=[abl])
 
-"""        history = train_model(sm_root = '', opt = 'adam', ep = 30, ds = 'CIFAR10', net_name = 'resnet18',
+        trainloader = [(x, y) for x, y in trainloader]
+        testloader = [(x, y) for x, y in testloader]
+
+        history = train_model(sm_root = '', opt = 'cmalbd', ep = 30, ds = 'CIFAR10', net_name = 'resnet18',
                               history_ID = 'provaAblation'+str(abl), dts_train = trainloader, dts_test = testloader, verbose_train = True,
                               zeta = 0.05, eps = 1e-3, theta = 0.5, delta = 0.9, tau = 1e-2, gamma = 1e-6,
-                              verbose = True, verbose_EDFL = True, ablate=abl)"""
+                              verbose = True, verbose_EDFL = True, ablate=None)
+
+        ''' history = train_model(sm_root = '', opt = 'adam', ep = 30, ds = 'CIFAR10', net_name = 'resnet18',
+                                      history_ID = 'provaAblation'+str(abl), dts_train = trainloader,
+                                      dts_test = testloader, verbose_train = True, ablate=[abl])'''
