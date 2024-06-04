@@ -1,3 +1,5 @@
+import random
+
 import torch
 import pandas as pd
 import pickle
@@ -9,6 +11,7 @@ import torchvision
 from typing import Union
 from cmalight import CMA_L
 from cmalight_BD import CMA_L_BD
+
 
 # Used to compute the loss function over the entire data set
 def closure(data_loader: torch.utils.data.DataLoader,
@@ -30,10 +33,15 @@ def closure(data_loader: torch.utils.data.DataLoader,
 # Used to compute the accuracy over the entire data set
 def accuracy(data_loader: torch.utils.data.DataLoader,
              model: torchvision.models,
-             device: Union[torch.device, str]):
+             device: Union[torch.device, str],
+             val_check=False, ep=0):
     model.eval()
     correct_predictions = 0
     total_samples = 0
+
+    if val_check:
+        random.seed(ep)
+        data_loader = random.sample(data_loader, int(len(data_loader) / 5))
 
     with torch.no_grad():
         for inputs, labels in data_loader:

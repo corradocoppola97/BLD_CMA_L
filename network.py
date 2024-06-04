@@ -2,13 +2,18 @@ import torch
 import torchvision
 
 
-def get_pretrained_net(type_model, num_classes=10):
+def get_pretrained_net(type_model, num_classes=10,seed=1,pretrained=True):
+    torch.manual_seed(seed)
     if type_model == 'resnet18':
-        pretrainedmodel = torchvision.models.resnet18(weights = torchvision.models.ResNet18_Weights.IMAGENET1K_V1,
-                                                      progress = True)
-        num_ftrs = pretrainedmodel.fc.in_features
-        pretrainedmodel.fc = torch.nn.Linear(num_ftrs, num_classes)
-        torch.nn.init.xavier_uniform(pretrainedmodel.fc.weight)
+        if pretrained:
+            pretrainedmodel = torchvision.models.resnet18(weights = torchvision.models.ResNet18_Weights.IMAGENET1K_V1,
+                                                          progress = True)
+            num_ftrs = pretrainedmodel.fc.in_features
+            pretrainedmodel.fc = torch.nn.Linear(num_ftrs, num_classes)
+            torch.nn.init.xavier_uniform(pretrainedmodel.fc.weight)
+        else:
+            pretrainedmodel = torchvision.models.resnet18()
+            num_ftrs = pretrainedmodel.fc.in_f
 
     elif type_model == 'resnet50':
         pretrainedmodel = torchvision.models.resnet50(weights = torchvision.models.ResNet50_Weights.IMAGENET1K_V1,
@@ -79,8 +84,6 @@ def get_pretrained_net(type_model, num_classes=10):
         num_ftrs = pretrainedmodel.classifier[5].in_features
         pretrainedmodel.classifier[5] = torch.nn.Linear(num_ftrs, num_classes)
         torch.nn.init.xavier_uniform(pretrainedmodel.classifier[5].weight)
-    else:
-        raise ValueError('Select another network available')
 
     return pretrainedmodel
 
