@@ -1,5 +1,5 @@
 import time
-
+import os
 import numpy as np
 from cmalight_BD import get_w
 from network import get_pretrained_net
@@ -8,6 +8,7 @@ import torchvision
 from torch.utils.data import Subset
 from warnings import filterwarnings
 from utils_BD import set_optimizer, closure, accuracy, count_parameters
+from typing import Union, Tuple, Any, List
 
 filterwarnings('ignore')
 
@@ -27,8 +28,8 @@ def train_model(sm_root: str,
                 ds: str,
                 net_name: str,
                 history_ID: str,
-                dts_train: torch.utils.data.DataLoader,
-                dts_test: torch.utils.data.DataLoader,
+                dts_train: Union[torch.utils.data.DataLoader,List[Tuple[Any,Any]]],
+                dts_test: Union[torch.utils.data.DataLoader,List[Tuple[Any,Any]]],
                 verbose_train: bool,
                 importance: list,
                 beta=1,
@@ -128,7 +129,7 @@ def train_model(sm_root: str,
             val_accuracy = accuracy(dts_test, model, device, val_check = True, ep=epoch)
             if val_accuracy <= ro * val_accuracy_threshold:
                 count += 1
-                print(f'no val acc improvement for {count} consecutive epochs')
+                #print(f'no val acc improvement for {count} consecutive epochs')
                 if count == patience:
                     count = 0
                     for block in reversed(importance):
@@ -158,7 +159,7 @@ def train_model(sm_root: str,
         if opt == 'cmal' or opt == 'cmalbd':
             optimizer.set_f_tilde(f_tilde)
             phi = optimizer.phi
-            print(f' f_tilde = {f_tilde}   ')
+            #print(f' f_tilde = {f_tilde}   ')
             model, history, f_after, exit = optimizer.control_step(model, w_before, closure,
                                                                    dts_train, device, criterion, history, epoch)
             optimizer.set_phi(min(f_tilde, f_after, phi))
@@ -211,28 +212,36 @@ if __name__ == '__main__':
     nw = 6
     #inds = range(6000)
     #inds_test = range(600)
-    nets = ['resnet18', 'resnet152']
-    datasets = ['CIFAR10', 'CIFAR100']
+    nets = ['resnet18']#, 'resnet152']
+    datasets = ['CIFAR10']#, 'CIFAR100']
     importance = [3,4,1,2] # importance of the blocks, ascending order
+    seeds = [1,10,100,1000,10000]
+    try:
+        os.mkdir('prove_4giu')
+        os.chdir('prove_4giu')
+    except:
+        os.chdir('prove_4giu')
     for net in nets:
         for dataset in datasets:
-            # trainset = Subset(eval("torchvision.datasets."+ dataset)(root = dts_root, train = True, download = True, transform = transform), inds)
-            trainset = eval("torchvision.datasets." + dataset)(root = dts_root, train = True, download = True,
-                                                               transform = transform)
-            trainloader = torch.utils.data.DataLoader(trainset, batch_size = bs,
-                                                      shuffle = True)  # , pin_memory = True,num_workers = nw)
-            # testset = Subset(eval("torchvision.datasets."+dataset)(root = dts_root, train = False, download = True, transform = transform), inds_test)
-            testset = eval("torchvision.datasets." + dataset)(root = dts_root, train = False, download = True,
-                                                              transform = transform)
-            testloader = torch.utils.data.DataLoader(testset, batch_size = bs,
-                                                     shuffle = False)  # , pin_memory = True,num_workers = nw)
+            for seed in seeds:
+                # trainset = Subset(eval("torchvision.datasets."+ dataset)(root = dts_root, train = True, download = True, transform = transform), inds)
+                trainset = eval("torchvision.datasets." + dataset)(root = dts_root, train = True, download = True,
+                                                                   transform = transform)
+                trainloader = torch.utils.data.DataLoader(trainset, batch_size = bs,
+                                                          shuffle = True)  # , pin_memory = True,num_workers = nw)
+                # testset = Subset(eval("torchvision.datasets."+dataset)(root = dts_root, train = False, download = True, transform = transform), inds_test)
+                testset = eval("torchvision.datasets." + dataset)(root = dts_root, train = False, download = True,
+                                                                  transform = transform)
+                testloader = torch.utils.data.DataLoader(testset, batch_size = bs,
+                                                         shuffle = False)  # , pin_memory = True,num_workers = nw)
 
-            trainloader = [(x, y) for x, y in trainloader]
-            testloader = [(x, y) for x, y in testloader]
+                trainloader = [(x, y) for x, y in trainloader]
+                testloader = [(x, y) for x, y in testloader]
 
-            history = train_model(sm_root = '', opt = 'cmalbd', ep = 50, ds = dataset, net_name = net,
-                                  history_ID = 'prova', dts_train = trainloader,
-                                  dts_test = testloader, verbose_train = True,
-                                  zeta = 0.05, eps = 1e-3, theta = 0.5, delta = 0.9, tau = 1e-2, gamma = 1e-6,
-                                  verbose = True, verbose_EDFL = True,beta=1, patience=3, n_ep_cmal = 5, ro=1.005, importance = importance)
+                history = train_model(sm_root = '', opt = 'cmalbd', ep = 50, ds = dataset, net_name = net,
+                                      history_ID = 'seed_'+str(seed), dts_train = trainloader,
+                                      dts_test = testloader, verbose_train = True,
+                                      zeta = 0.05, eps = 1e-3, theta = 0.5, delta = 0.9, tau = 1e-2, gamma = 1e-6,
+                                      verbose = True, verbose_EDFL = True,beta=1, patience=3,
+                                      n_ep_cmal = 5, ro=1.005, importance = importance, seed=seed)
 
