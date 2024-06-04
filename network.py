@@ -13,7 +13,7 @@ def get_pretrained_net(type_model, num_classes=10,seed=1,pretrained=True):
             torch.nn.init.xavier_uniform(pretrainedmodel.fc.weight)
         else:
             pretrainedmodel = torchvision.models.resnet18()
-            num_ftrs = pretrainedmodel.fc.in_f
+            num_ftrs = pretrainedmodel.fc.in_features
 
     elif type_model == 'resnet50':
         pretrainedmodel = torchvision.models.resnet50(weights = torchvision.models.ResNet50_Weights.IMAGENET1K_V1,
