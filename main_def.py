@@ -240,5 +240,5 @@ if __name__ == '__main__':
                                       history_ID = 'prova', dts_train = trainloader,
                                       dts_test = testloader, verbose_train = True,
                                       zeta = 0.05, eps = 1e-3, theta = 0.5, delta = 0.9, tau = 1e-2, gamma = 1e-6,
-                                      verbose = True, verbose_EDFL = True, beta = 1.25, patience = 3, n_ep_cmal = 5,
+                                      verbose = True, verbose_EDFL = True, beta = 1.25, patience = 2, n_ep_cmal = 5,
                                       ro = 1.005, importance = importance, seed = seed)
