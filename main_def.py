@@ -212,8 +212,8 @@ if __name__ == '__main__':
     nw = 6
     #inds = range(6000)
     #inds_test = range(600)
-    nets = ['resnet18']#, 'resnet152']
-    datasets = ['CIFAR10']#, 'CIFAR100']
+    nets = ['resnet18', 'resnet152']
+    datasets = ['CIFAR10', 'CIFAR100']
     importance = [3,4,1,2] # importance of the blocks, ascending order
     seeds = [1,10,100,1000,10000]
     try:
@@ -239,9 +239,9 @@ if __name__ == '__main__':
                 testloader = [(x, y) for x, y in testloader]
 
                 history = train_model(sm_root = '', opt = 'cmalbd', ep = 50, ds = dataset, net_name = net,
-                                      history_ID = 'seed_'+str(seed), dts_train = trainloader,
+                                      history_ID = '_allcmal_seed_'+str(seed), dts_train = trainloader,
                                       dts_test = testloader, verbose_train = True,
                                       zeta = 0.05, eps = 1e-3, theta = 0.5, delta = 0.9, tau = 1e-2, gamma = 1e-6,
                                       verbose = True, verbose_EDFL = True,beta=1, patience=3,
-                                      n_ep_cmal = 5, ro=1.005, importance = importance, seed=seed)
+                                      n_ep_cmal = 50, ro=1.005, importance = importance, seed=seed)
 
