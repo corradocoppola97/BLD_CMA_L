@@ -90,13 +90,13 @@ def train_model(sm_root: str,
 
     # Train
     for epoch in range(ep):
-        print(blocks_to_update_list)
         # epoch_update_list = []
         # real_loss = closure(dts_train, model, criterion, device)
         # print(f'Real Loss Before Epoch =  {real_loss}') #
         start_time = time.time()
         if verbose_train: print(f'-------------Epoch {epoch + 1} di {ep}-------------')
         # print(f'Real Loss Before Epoch =  {real_loss}')
+        print(blocks_to_update_list)
         model.train()
         f_tilde = 0
         if opt == 'cmal' or opt == 'cmalbd':
@@ -117,16 +117,16 @@ def train_model(sm_root: str,
         else:  # Selection of blocks to freeze or unfreeze
             block_list = [[p for p in eval(f'model.layer{block}.parameters()', {'model': model})] for block in
                           blocks_to_update_list]
-            difference = [torch.linalg.norm(torch.cat([p.data.view(-1) for p in block_list[k]]) - torch.cat(
-                [p.data.view(-1) for p in block_before_ep[k]])).item() for k in range(len(blocks_to_update_list))]
 
-            deactivation_threshold = beta * np.mean(difference)
-
-            # We froze the least important block whose update is small compared to the average update:
-            if difference[0] < deactivation_threshold:
-                for p in eval('model.layer' + str(blocks_to_update_list[0]) + '.parameters()'):
-                    p.requires_grad = False
-                blocks_to_update_list.pop(0)
+            if len(blocks_to_update_list) > 1:
+                difference = [torch.linalg.norm(torch.cat([p.data.view(-1) for p in block_list[k]]) - torch.cat(
+                    [p.data.view(-1) for p in block_before_ep[k]])).item() for k in range(len(blocks_to_update_list))]
+                deactivation_threshold = beta * np.mean(difference)
+                # We froze the least important block whose update is small compared to the average update:
+                if difference[0] < deactivation_threshold:
+                    for p in eval('model.layer' + str(blocks_to_update_list[0]) + '.parameters()'):
+                        p.requires_grad = False
+                    blocks_to_update_list.pop(0)
 
             # We update layers closer to the output if not sufficient improvement of val. acc for a number of consecutive epochs = patience
             val_accuracy = accuracy(dts_test, model, device, val_check = True, ep = epoch)
@@ -150,10 +150,10 @@ def train_model(sm_root: str,
         if epoch + 1 == n_ep_cmal:
             val_accuracy_threshold = accuracy(dts_test, model, device, val_check = True, ep = epoch)
 
-        if len(blocks_to_update_list) == 0:
-            blocks_to_update_list.append(importance[-1])
-            for p in eval('model.layer' + str(importance[-1]) + '.parameters()'):
-                p.requires_grad = True
+        #if len(blocks_to_update_list) == 0:
+        #    blocks_to_update_list.append(importance[-1])
+        #    for p in eval('model.layer' + str(importance[-1]) + '.parameters()'):
+        #        p.requires_grad = True
 
         block_before_ep = [[p.data.clone() for p in eval(f'model.layer{block}.parameters()', {'model': model})] for
                            block in blocks_to_update_list]
@@ -216,7 +216,7 @@ if __name__ == '__main__':
     nw = 6
     # inds = range(6000)
     # inds_test = range(600)
-    nets = ['resnet18', 'resnet152']
+    nets = ['resnet152', 'resnet18']
     datasets = ['CIFAR10', 'CIFAR100']
     importance = [3, 4, 1, 2]  # importance of the blocks, ascending order
     for net in nets:
@@ -240,5 +240,5 @@ if __name__ == '__main__':
                                       history_ID = 'prova', dts_train = trainloader,
                                       dts_test = testloader, verbose_train = True,
                                       zeta = 0.05, eps = 1e-3, theta = 0.5, delta = 0.9, tau = 1e-2, gamma = 1e-6,
-                                      verbose = True, verbose_EDFL = True, beta = 1.25, patience = 2, n_ep_cmal = 5,
+                                      verbose = True, verbose_EDFL = True, beta = 1.25, patience = 3, n_ep_cmal = 5,
                                       ro = 1.005, importance = importance, seed = seed)
