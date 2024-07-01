@@ -14,7 +14,6 @@ def set_w(model, w):
         param.data = w[index:index+param_size].view(param.size()).to(param.device)
         index += param_size
 
-
 class CMA_L_BD(torch.optim.Optimizer):
     def __init__(self, params, alpha=1e-3, zeta=0.05, eps=1e-3, theta=0.5,
                  delta=0.9, gamma=1e-6, tau=1e-2, verbose=False, max_it_EDFL=100,
@@ -87,11 +86,12 @@ class CMA_L_BD(torch.optim.Optimizer):
             return alpha, nfev, f_tilde
 
         w_prova = w_before + d_k * (alpha / delta)
-        with torch.no_grad():
-            idx = 0
-            for param in sample_model.parameters():
-                param.copy_(w_prova[idx:idx + param.numel()].reshape(param.shape))
-                idx += param.numel()
+        set_w(sample_model, w_prova)
+        #with torch.no_grad(): # sostituito da set_w
+        #    idx = 0
+        #    for param in sample_model.parameters():
+        #        param.copy_(w_prova[idx:idx + param.numel()].reshape(param.shape))
+        #        idx += param.numel()
 
         cur_loss = closure(dl_train, sample_model, criterion, device)
         print(f'cur loss = {cur_loss}')
@@ -106,11 +106,12 @@ class CMA_L_BD(torch.optim.Optimizer):
             f_j = cur_loss
             alpha = alpha / delta
             w_prova = w_before + d_k * (alpha / delta)
-            with torch.no_grad():
-                idxx = 0
-                for param in sample_model.parameters():
-                    param.copy_(w_prova[idxx:idxx + param.numel()].reshape(param.shape))
-                    idxx += param.numel()
+            set_w(sample_model, w_prova)
+            #with torch.no_grad():
+            #    idxx = 0
+            #    for param in sample_model.parameters():
+            #        param.copy_(w_prova[idxx:idxx + param.numel()].reshape(param.shape))
+            #        idxx += param.numel()
             cur_loss = closure(dl_train, sample_model, criterion, device)
             nfev += 1
             idx += 1
